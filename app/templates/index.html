@@ -9,10 +9,44 @@
     <body>
         <header>
             <h1>MUC DB UI</h1>
-            <form action="/table" method="post">
-                Table Name: <input type="text" name="tname" required /><br />
-                <input type="submit" value="Show Table" />
-            </form>
         </header>
+        <main>
+            <section>
+                <form action="/table" method="post">
+                    <h2>Show Table</h2>
+                    Table Name: <input type="text" name="tname" required /><br />
+                    <input type="submit" value="Show" />
+                </form>
+            </section>
+            <br />
+            <section>
+                <form action="/supplier" method="post">
+                    <h2>Add Supplier</h2>
+                    ID #: <input type="number" name="sid" required /><br />
+                    Name: <input type="text" name="sname" required /><br />
+                    Email: <input type="text" name="semail" required /><br />
+                    Telephone #'s (comma-separated): <textarea name="stel" required></textarea><br />
+                    <input type="submit" value="Add" />
+                </form>
+            </section>
+            <br />
+            <section>
+                <form action="/expenses" method="post">
+                    <h2>Annual Expenses for Parts</h2>
+                    Start Year: <input type="number" name="startyear" required /><br />
+                    End Year: <input type="number" name="endyear" required /><br />
+                    <input type="submit" value="Summarize" />
+                </form>
+            </section>
+            <br />
+            <section>
+                <form action="/budget" method="post">
+                    <h2>Budget Projection</h2>
+                    Number of Years: <input type="number" name="years" required /><br />
+                    Inflation Rate (%): <input type="number" name="rate" required /><br />
+                    <input type="submit" value="Calculate" />
+                </form>
+            </section>
+        </main>
     </body>
 </html>
