@@ -94,7 +94,14 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         rate = request.form.get("rate")
         conn = get_db_connection()
         cur = conn.cursor()
-        query = ""
+        query = (
+            "SELECT YEAR(orders.order_date) AS order_year, "
+            + "SUM(order_parts.qty * parts.price) * (1 + (rate / 100)) "
+            + "FROM orders JOIN order_parts ON orders.order_id = order_parts.order_id "
+            + "JOIN parts ON order_parts.part_id = parts._id "
+            + "WHERE order_year >= (SELECT MAX(YEAR(order_date)) - N + 1 FROM orders) "
+            + "GROUP BY order_year ORDER BY order_year DESC"
+        )
         cur.execute("%s", [query])
         data = cur.fetchall()
         cur.close()
