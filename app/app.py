@@ -31,7 +31,7 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         return render_template("index.html")
 
     @app.route("/table", methods=["POST"])
-    def table() -> str:
+    def show_table() -> str:
         name = request.form.get("tname")
         conn = get_db_connection()
         cur = conn.cursor()
