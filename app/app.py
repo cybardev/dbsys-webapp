@@ -65,7 +65,7 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         return redirect("/")
 
     @app.route("/expenses", methods=["POST"])
-    def annual_expenses():
+    def annual_expenses() -> str:
         start_yr = request.form.get("startyear")
         end_yr = request.form.get("endyear")
         conn = get_db_connection()
@@ -89,7 +89,7 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         )
 
     @app.route("/budget", methods=["POST"])
-    def budget():
+    def budget() -> str:
         years = request.form.get("years")
         rate = request.form.get("rate")
         conn = get_db_connection()
