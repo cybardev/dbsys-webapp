@@ -3,7 +3,7 @@
 
 import argparse
 
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, Response
 import MySQLdb
 
 
@@ -63,6 +63,14 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         cur.close()
         conn.close()
         return redirect("/")
+
+    @app.route("/expenses", methods=["POST"])
+    def annual_expenses():
+        pass
+
+    @app.route("/budget", methods=["POST"])
+    def budget():
+        pass
 
     return app
 
