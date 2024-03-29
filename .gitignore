@@ -1,0 +1,6 @@
+# data files
+*.json
+*.csv
+
+# backup
+*.bak

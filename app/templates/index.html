@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Group 13</title>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='common.css') }}" />
+    </head>
+    <body>
+        <header>
+            <h1>MUC DB UI</h1>
+            <form action="/table" method="post">
+                Table Name: <input type="text" name="tname" required /><br />
+                <input type="submit" value="Show Table" />
+            </form>
+        </header>
+    </body>
+</html>

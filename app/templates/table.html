@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Table {{ tname }}</title>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='common.css') }}" />
+    </head>
+    <body>
+        <header>
+            <h1>MUC DB UI</h1>
+            <form action="/table" method="post">
+                Table Name: <input type="text" name="tname" required /><br />
+                <input type="submit" value="Show Table" />
+            </form>
+        </header>
+        <main>
+            <table>
+                <thead>
+                    <tr>
+                        {% for header in theaders %}
+                        <td>{{ header }}</td>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in tdata %}
+                    <tr>
+                        {% for col in row %}
+                        <td>{{ col }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </main>
+        <footer><a href="/">Home</a></footer>
+    </body>
+</html>
