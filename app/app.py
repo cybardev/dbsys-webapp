@@ -47,7 +47,7 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         return render_template("table.html", tname=name, theaders=headers, tdata=data)
 
     @app.route("/supplier", methods=["POST"])
-    def add_supplier():
+    def add_supplier() -> Response:
         conn = get_db_connection()
         cur = conn.cursor()
         details = request.form
