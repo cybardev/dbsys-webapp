@@ -66,7 +66,27 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
 
     @app.route("/expenses", methods=["POST"])
     def annual_expenses():
-        pass
+        start_yr = request.form.get("startyear")
+        end_yr = request.form.get("endyear")
+        conn = get_db_connection()
+        cur = conn.cursor()
+        query = (
+            "SELECT YEAR(orders.order_date), SUM(order_parts.qty * parts.price) "
+            + "FROM orders JOIN order_parts ON orders.order_id = order_parts.order_id "
+            + "JOIN parts ON order_parts.part_id = parts._id "
+            + "WHERE YEAR(orders.order_date) BETWEEN start_year AND end_year "
+            + "GROUP BY YEAR(orders.order_date)"
+        )
+        cur.execute("%s", [query])
+        data = cur.fetchall()
+        cur.close()
+        conn.close()
+        return render_template(
+            "expenses.html",
+            start_yr=start_yr,
+            end_yr=end_yr,
+            tdata=data,
+        )
 
     @app.route("/budget", methods=["POST"])
     def budget():
