@@ -46,6 +46,24 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         conn.close()
         return render_template("table.html", tname=name, theaders=headers, tdata=data)
 
+    @app.route("/supplier", methods=["POST"])
+    def add_supplier():
+        conn = get_db_connection()
+        cur = conn.cursor()
+        details = request.form
+        cur.execute(
+            "INSERT INTO suppliers(supplier_id, name, email) VALUES (%s, %s, %s)",
+            (details["sid"], details["sname"], details["semail"]),
+        )
+        cur.execute(
+            "INSERT INTO suppliers_telephone(supplier_id, numbers) VALUES (%s, %s)",
+            (details["sid"], details["stel"]),
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        return redirect("/")
+
     return app
 
 
