@@ -90,7 +90,16 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
 
     @app.route("/budget", methods=["POST"])
     def budget():
-        pass
+        years = request.form.get("years")
+        rate = request.form.get("rate")
+        conn = get_db_connection()
+        cur = conn.cursor()
+        query = ""
+        cur.execute("%s", [query])
+        data = cur.fetchall()
+        cur.close()
+        conn.close()
+        return render_template("budget.html", years=years, rate=rate, tdata=data)
 
     return app
 
