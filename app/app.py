@@ -127,7 +127,7 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
                 GROUP BY order_year ORDER BY order_year DESC
                 """,
                 (rate, years),
-            )
+            )  # FIXME: must predict next N years, not last N years
             data = db.cur.fetchall()
         return render_template("budget.html", years=years, rate=rate, tdata=data)
 
