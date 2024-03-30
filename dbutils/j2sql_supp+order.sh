@@ -7,7 +7,7 @@ db="uXX"
 echo "source make_tables.sql;" | mysql -u "$user" --password="$pass" "$db"
 echo
 
-python3 j2tsv_supp_order.py suppliers_100.json orders_4000.json
+python3 j2tsv_supp+order.py suppliers_100.json orders_4000.json
 
 echo "load data local infile 'suppliers.tsv' into table suppliers" | mysql $db -u $user --password="$pass"
 echo
