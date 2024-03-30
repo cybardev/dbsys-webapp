@@ -3,6 +3,8 @@ import urllib.parse as urlparse
 import MySQLdb
 from flask import Flask, Response, redirect, render_template, request
 
+from .db import Database
+
 
 def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> Flask:
     """Factory function to create a Flask web app
@@ -17,17 +19,6 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         Flask: web app object to run
     """
     app = Flask(__name__)
-
-    def get_db_connection() -> MySQLdb.connections.Connection:
-        """Establish a connection with a MySQL server
-
-        Returns:
-            MySQLdb.connections.Connection: database connection object
-        """
-        conn = MySQLdb.connect(
-            host=DB_HOST, user=DB_USER, passwd=DB_PASSWORD, db=DB_NAME
-        )
-        return conn
 
     @app.route("/")
     def index() -> str:
@@ -55,17 +46,14 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
             str: html template for table view
         """
         name = request.form.get("tname")
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute(
-            "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'%s'",
-            (name),
-        )
-        headers = cur.fetchall()
-        cur.execute("SELECT * FROM %s", (name))
-        data = cur.fetchall()
-        cur.close()
-        conn.close()
+        with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
+            db.cur.execute(
+                "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'%s'",
+                (name),
+            )
+            headers = db.cur.fetchall()
+            db.cur.execute("SELECT * FROM %s", (name))
+            data = db.cur.fetchall()
         return render_template("table.html", tname=name, theaders=headers, tdata=data)
 
     @app.route("/supplier", methods=["POST"])
@@ -75,26 +63,19 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         Returns:
             Response: response from endpoint to redirect to
         """
-        conn = get_db_connection()
-        cur = conn.cursor()
-        details = request.form
         try:
-            cur.execute(
-                "INSERT INTO suppliers(supplier_id, name, email) VALUES (%s, %s, %s)",
-                (details["sid"], details["sname"], details["semail"]),
-            )
-            cur.execute(
-                "INSERT INTO suppliers_telephone(supplier_id, numbers) VALUES (%s, %s)",
-                (details["sid"], details["stel"]),
-            )
-            conn.commit()
+            with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
+                details = request.form
+                db.cur.execute(
+                    "INSERT INTO suppliers(supplier_id, name, email) VALUES (%s, %s, %s)",
+                    (details["sid"], details["sname"], details["semail"]),
+                )
+                db.cur.execute(
+                    "INSERT INTO suppliers_telephone(supplier_id, numbers) VALUES (%s, %s)",
+                    (details["sid"], details["stel"]),
+                )
         except (MySQLdb.Error, MySQLdb.Warning) as e:
-            msg = str(e)
-            print(msg)
-            return redirect(f"/error/{urlparse(msg)}")
-        finally:
-            cur.close()
-            conn.close()
+            return redirect(f"/error/{urlparse(str(e))}")
         return redirect("/")
 
     @app.route("/expenses", methods=["POST"])
@@ -106,21 +87,18 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         """
         start_yr = request.form.get("startyear")
         end_yr = request.form.get("endyear")
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute(
-            """
-            SELECT YEAR(orders.order_date), SUM(order_parts.qty * parts.price)
-            FROM orders JOIN order_parts ON orders.order_id = order_parts.order_id
-            JOIN parts ON order_parts.part_id = parts._id
-            WHERE YEAR(orders.order_date) BETWEEN %s AND %s
-            GROUP BY YEAR(orders.order_date)
-            """,
-            (start_yr, end_yr),
-        )
-        data = cur.fetchall()
-        cur.close()
-        conn.close()
+        with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
+            db.cur.execute(
+                """
+                SELECT YEAR(orders.order_date), SUM(order_parts.qty * parts.price)
+                FROM orders JOIN order_parts ON orders.order_id = order_parts.order_id
+                JOIN parts ON order_parts.part_id = parts._id
+                WHERE YEAR(orders.order_date) BETWEEN %s AND %s
+                GROUP BY YEAR(orders.order_date)
+                """,
+                (start_yr, end_yr),
+            )
+            data = db.cur.fetchall()
         return render_template(
             "expenses.html",
             start_yr=start_yr,
@@ -138,22 +116,19 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         """
         years = request.form.get("years")
         rate = request.form.get("rate")
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute(
-            """
-            SELECT YEAR(orders.order_date) AS order_year,
-            SUM(order_parts.qty * parts.price) * (1 + (%s / 100))
-            FROM orders JOIN order_parts ON orders.order_id = order_parts.order_id
-            JOIN parts ON order_parts.part_id = parts._id
-            WHERE order_year >= (SELECT MAX(YEAR(order_date)) - %s + 1 FROM orders)
-            GROUP BY order_year ORDER BY order_year DESC
-            """,
-            (rate, years),
-        )
-        data = cur.fetchall()
-        cur.close()
-        conn.close()
+        with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
+            db.cur.execute(
+                """
+                SELECT YEAR(orders.order_date) AS order_year,
+                SUM(order_parts.qty * parts.price) * (1 + (%s / 100))
+                FROM orders JOIN order_parts ON orders.order_id = order_parts.order_id
+                JOIN parts ON order_parts.part_id = parts._id
+                WHERE order_year >= (SELECT MAX(YEAR(order_date)) - %s + 1 FROM orders)
+                GROUP BY order_year ORDER BY order_year DESC
+                """,
+                (rate, years),
+            )
+            data = db.cur.fetchall()
         return render_template("budget.html", years=years, rate=rate, tdata=data)
 
     return app
