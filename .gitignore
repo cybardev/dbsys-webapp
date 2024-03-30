@@ -4,3 +4,6 @@
 
 # backup
 *.bak
+
+# cache
+__pycache__/
