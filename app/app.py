@@ -129,7 +129,7 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         )
 
     @app.route("/budget", methods=["POST"])
-    def budget() -> str:
+    def budget_projection() -> str:
         """Show a table of annual expenses for a given number of years
            after latest entry adjusted for inflation
 
