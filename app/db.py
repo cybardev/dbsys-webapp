@@ -11,24 +11,32 @@ class Database:
         self.__user = username
         self.__pass = password
         self.__db = database
-        self.conn = None
-        self.cur = None
+        self.__conn = None
+        self.__cur = None
+
+    @property
+    def connection(self):
+        return self.__conn
+
+    @property
+    def cursor(self):
+        return self.__cur
 
     def __enter__(self):
-        self.conn = MySQLdb.connect(
+        self.__conn = MySQLdb.connect(
             host=self.__host, user=self.__user, passwd=self.__pass, db=self.__db
         )
-        self.cur = self.conn.cursor()
+        self.__cur = self.__conn.cursor()
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback) -> bool:
         if exc_type is None:
-            self.conn.commit()
+            self.__conn.commit()
         else:
             print(f"Error: {exc_value}")
-            self.conn.rollback()
+            self.__conn.rollback()
             return False
 
-        self.cur.close()
-        self.conn.close()
+        self.__cur.close()
+        self.__conn.close()
         return True

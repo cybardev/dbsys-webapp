@@ -47,13 +47,13 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         """
         name = request.form.get("tname")
         with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
-            db.cur.execute(
+            db.cursor.execute(
                 "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'%s'",
                 (name),
             )
-            headers = db.cur.fetchall()
-            db.cur.execute("SELECT * FROM %s", (name))
-            data = db.cur.fetchall()
+            headers = db.cursor.fetchall()
+            db.cursor.execute("SELECT * FROM %s", (name))
+            data = db.cursor.fetchall()
         return render_template("table.html", tname=name, theaders=headers, tdata=data)
 
     @app.route("/supplier", methods=["POST"])
@@ -66,11 +66,11 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         try:
             with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
                 details = request.form
-                db.cur.execute(
+                db.cursor.execute(
                     "INSERT INTO suppliers(supplier_id, name, email) VALUES (%s, %s, %s)",
                     (details["sid"], details["sname"], details["semail"]),
                 )
-                db.cur.execute(
+                db.cursor.execute(
                     "INSERT INTO suppliers_telephone(supplier_id, numbers) VALUES (%s, %s)",
                     (details["sid"], details["stel"]),
                 )
@@ -88,7 +88,7 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         start_yr = request.form.get("startyear")
         end_yr = request.form.get("endyear")
         with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
-            db.cur.execute(
+            db.cursor.execute(
                 """
                 SELECT YEAR(orders.order_date), SUM(order_parts.qty * parts.price)
                 FROM orders JOIN order_parts ON orders.order_id = order_parts.order_id
@@ -98,7 +98,7 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
                 """,
                 (start_yr, end_yr),
             )
-            data = db.cur.fetchall()
+            data = db.cursor.fetchall()
         return render_template(
             "expenses.html",
             start_yr=start_yr,
@@ -117,7 +117,7 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         years = request.form.get("years")
         rate = request.form.get("rate")
         with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
-            db.cur.execute(
+            db.cursor.execute(
                 """
                 SELECT YEAR(orders.order_date) AS order_year,
                 SUM(order_parts.qty * parts.price) * (1 + (%s / 100))
@@ -128,7 +128,7 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
                 """,
                 (rate, years),
             )  # FIXME: must predict next N years, not last N years
-            data = db.cur.fetchall()
+            data = db.cursor.fetchall()
         return render_template("budget.html", years=years, rate=rate, tdata=data)
 
     return app
