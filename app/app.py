@@ -1,3 +1,5 @@
+import urllib.parse as urlparse
+
 import MySQLdb
 from flask import Flask, Response, redirect, render_template, request
 
@@ -36,6 +38,15 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         """
         return render_template("index.html")
 
+    @app.route("/error/<string:msg>")
+    def error_page(err_msg: str) -> str:
+        """Render error page with info
+
+        Returns:
+            str: html template for error page
+        """
+        return render_template("error.html", msg=err_msg)
+
     @app.route("/table", methods=["POST"])
     def show_table() -> str:
         """Show table from name specified in text input form
@@ -67,17 +78,23 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         conn = get_db_connection()
         cur = conn.cursor()
         details = request.form
-        cur.execute(
-            "INSERT INTO suppliers(supplier_id, name, email) VALUES (%s, %s, %s)",
-            (details["sid"], details["sname"], details["semail"]),
-        )
-        cur.execute(
-            "INSERT INTO suppliers_telephone(supplier_id, numbers) VALUES (%s, %s)",
-            (details["sid"], details["stel"]),
-        )
-        conn.commit()
-        cur.close()
-        conn.close()
+        try:
+            cur.execute(
+                "INSERT INTO suppliers(supplier_id, name, email) VALUES (%s, %s, %s)",
+                (details["sid"], details["sname"], details["semail"]),
+            )
+            cur.execute(
+                "INSERT INTO suppliers_telephone(supplier_id, numbers) VALUES (%s, %s)",
+                (details["sid"], details["stel"]),
+            )
+            conn.commit()
+        except (MySQLdb.Error, MySQLdb.Warning) as e:
+            msg = str(e)
+            print(msg)
+            return redirect(f"/error/{urlparse(msg)}")
+        finally:
+            cur.close()
+            conn.close()
         return redirect("/")
 
     @app.route("/expenses", methods=["POST"])
