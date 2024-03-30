@@ -2,12 +2,18 @@
 # -*- coding: utf8 -*-
 
 import argparse
+from getpass import getpass
 
 from .app import app_factory
 
 
 def main(args: argparse.Namespace) -> None:
-    app = app_factory(args.HOST, args.USER, args.PASSWORD, args.DATABASE)
+    password = (
+        args.PASSWORD
+        if args.PASSWORD is not None
+        else getpass("Enter MySQL password: ")
+    )
+    app = app_factory(args.HOST, args.USER, password, args.DATABASE)
     app.run(debug=True, host="0.0.0.0", port=args.PORT)
 
 
@@ -54,7 +60,7 @@ def get_args() -> argparse.Namespace:
         dest="PASSWORD",
         type=str,
         help="database to use for webapp",
-        required=True,
+        default=None,
     )
     return parser.parse_args()
 
