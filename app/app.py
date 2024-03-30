@@ -3,9 +3,25 @@ from flask import Flask, Response, redirect, render_template, request, url_for
 
 
 def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> Flask:
+    """Factory function to create a Flask web app
+
+    Args:
+        DB_HOST (str): hostname for database server
+        DB_USER (str): username for database server
+        DB_PASSWORD (str): password for database server
+        DB_NAME (str): name of database to connect to
+
+    Returns:
+        Flask: web app object to run
+    """
     app = Flask(__name__)
 
-    def get_db_connection():
+    def get_db_connection() -> MySQLdb.connections.Connection:
+        """Establish a connection with a MySQL server
+
+        Returns:
+            MySQLdb.connections.Connection: database connection object
+        """
         conn = MySQLdb.connect(
             host=DB_HOST, user=DB_USER, passwd=DB_PASSWORD, db=DB_NAME
         )
