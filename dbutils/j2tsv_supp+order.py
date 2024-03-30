@@ -21,7 +21,7 @@ def suppliers_list(fname: str) -> list:
 
 def suppliers_to_tsv(s_list: list):
     with open("suppliers.tsv", "w", newline="") as sup_file, open(
-        "suppliers_tel.tsv", "w", newline=""
+        "suppliers_telephone.tsv", "w", newline=""
     ) as tel_file:
         sup_writer = csv.writer(sup_file, delimiter="\t")
         tel_writer = csv.writer(tel_file, delimiter="\t")
