@@ -48,10 +48,10 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         cur = conn.cursor()
         cur.execute(
             "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'%s'",
-            [name],
+            (name),
         )
         headers = cur.fetchall()
-        cur.execute("SELECT * FROM %s", [name])
+        cur.execute("SELECT * FROM %s", (name))
         data = cur.fetchall()
         cur.close()
         conn.close()
@@ -91,14 +91,16 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         end_yr = request.form.get("endyear")
         conn = get_db_connection()
         cur = conn.cursor()
-        query = (
-            "SELECT YEAR(orders.order_date), SUM(order_parts.qty * parts.price) "
-            + "FROM orders JOIN order_parts ON orders.order_id = order_parts.order_id "
-            + "JOIN parts ON order_parts.part_id = parts._id "
-            + "WHERE YEAR(orders.order_date) BETWEEN start_year AND end_year "
-            + "GROUP BY YEAR(orders.order_date)"
+        cur.execute(
+            """
+            SELECT YEAR(orders.order_date), SUM(order_parts.qty * parts.price)
+            FROM orders JOIN order_parts ON orders.order_id = order_parts.order_id
+            JOIN parts ON order_parts.part_id = parts._id
+            WHERE YEAR(orders.order_date) BETWEEN %s AND %s
+            GROUP BY YEAR(orders.order_date)
+            """,
+            (start_yr, end_yr),
         )
-        cur.execute("%s", [query])
         data = cur.fetchall()
         cur.close()
         conn.close()
@@ -121,15 +123,17 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         rate = request.form.get("rate")
         conn = get_db_connection()
         cur = conn.cursor()
-        query = (
-            "SELECT YEAR(orders.order_date) AS order_year, "
-            + "SUM(order_parts.qty * parts.price) * (1 + (rate / 100)) "
-            + "FROM orders JOIN order_parts ON orders.order_id = order_parts.order_id "
-            + "JOIN parts ON order_parts.part_id = parts._id "
-            + "WHERE order_year >= (SELECT MAX(YEAR(order_date)) - N + 1 FROM orders) "
-            + "GROUP BY order_year ORDER BY order_year DESC"
+        cur.execute(
+            """
+            SELECT YEAR(orders.order_date) AS order_year,
+            SUM(order_parts.qty * parts.price) * (1 + (%s / 100))
+            FROM orders JOIN order_parts ON orders.order_id = order_parts.order_id
+            JOIN parts ON order_parts.part_id = parts._id
+            WHERE order_year >= (SELECT MAX(YEAR(order_date)) - %s + 1 FROM orders)
+            GROUP BY order_year ORDER BY order_year DESC
+            """,
+            (rate, years),
         )
-        cur.execute("%s", [query])
         data = cur.fetchall()
         cur.close()
         conn.close()
