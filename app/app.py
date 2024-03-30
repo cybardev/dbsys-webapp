@@ -22,6 +22,11 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
 
     @app.route("/table", methods=["POST"])
     def show_table() -> str:
+        """Show table from name specified in text input form
+
+        Returns:
+            str: html template for table view
+        """
         name = request.form.get("tname")
         conn = get_db_connection()
         cur = conn.cursor()
@@ -38,6 +43,11 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
 
     @app.route("/supplier", methods=["POST"])
     def add_supplier() -> Response:
+        """Add a supplier given info in input form
+
+        Returns:
+            Response: response from endpoint to redirect to
+        """
         conn = get_db_connection()
         cur = conn.cursor()
         details = request.form
@@ -56,6 +66,11 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
 
     @app.route("/expenses", methods=["POST"])
     def annual_expenses() -> str:
+        """Show a table of annual expenses between two given years
+
+        Returns:
+            str: html template for expenses view
+        """
         start_yr = request.form.get("startyear")
         end_yr = request.form.get("endyear")
         conn = get_db_connection()
@@ -80,6 +95,12 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
 
     @app.route("/budget", methods=["POST"])
     def budget() -> str:
+        """Show a table of annual expenses for a given number of years
+           after latest entry adjusted for inflation
+
+        Returns:
+            str: html template for budget view
+        """
         years = request.form.get("years")
         rate = request.form.get("rate")
         conn = get_db_connection()
