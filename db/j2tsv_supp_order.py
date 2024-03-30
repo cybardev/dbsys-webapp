@@ -6,7 +6,7 @@ import csv
 import sys
 
 
-def json_to_tsv(suppliers_filename, orders_filename):
+def json_to_tsv(suppliers_filename: str, orders_filename: str):
     s_list = suppliers_list(suppliers_filename)
     suppliers_to_tsv(s_list)
 
