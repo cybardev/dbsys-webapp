@@ -20,3 +20,12 @@ or, to enter password privately:
 ```sh
 python3 -m app -d $DB_NAME -u $DB_USER
 ```
+
+### Credits
+
+Professor Nikita Neveditsin
+
+- [j2sql_parts.sh](db/j2sql_parts.sh)
+- [parts_table.sql](db/parts_table.sql)
+- example Flask app
+- example Jinja templates
