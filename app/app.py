@@ -1,5 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, Response
 import MySQLdb
+from flask import Flask, Response, redirect, render_template, request, url_for
 
 
 def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> Flask:
