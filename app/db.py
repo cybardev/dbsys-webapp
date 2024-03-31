@@ -1,3 +1,5 @@
+import logging
+
 import MySQLdb
 
 
@@ -61,11 +63,11 @@ class Database:
             if exc_type is None:
                 self.__conn.commit()
             else:
-                print(f"Error: {exc_value}")
+                logging.error(f"Error: {exc_value}")
                 self.__conn.rollback()
                 return False
         except MySQLdb.Error as e:
-            print(f"Error while exiting context manager: {e}")
+            logging.error(f"Error while exiting context manager: {e}")
             return False
         finally:
             self.__cur.close()
