@@ -57,13 +57,18 @@ class Database:
         Returns:
             bool: True if exception has been handled, False if propagated to caller
         """
-        if exc_type is None:
-            self.__conn.commit()
-        else:
-            print(f"Error: {exc_value}")
-            self.__conn.rollback()
+        try:
+            if exc_type is None:
+                self.__conn.commit()
+            else:
+                print(f"Error: {exc_value}")
+                self.__conn.rollback()
+                return False
+        except MySQLdb.Error as e:
+            print(f"Error: {e}")
             return False
+        finally:
+            self.__cur.close()
+            self.__conn.close()
 
-        self.__cur.close()
-        self.__conn.close()
         return True
