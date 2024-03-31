@@ -90,11 +90,13 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
             db.cursor.execute(
                 """
-                SELECT YEAR(orders.order_date), SUM(order_parts.qty * parts.price)
-                FROM orders JOIN order_parts ON orders.order_id = order_parts.order_id
-                JOIN parts ON order_parts.part_id = parts._id
-                WHERE YEAR(orders.order_date) BETWEEN %s AND %s
+                SELECT YEAR(orders.order_date), SUM(order_parts.quantity * parts.price)
+                FROM order_parts, orders, parts
+                WHERE orders.order_id = order_parts.order_id
+                AND order_parts.part_id = parts._id
+                AND YEAR(orders.order_date) BETWEEN %s AND %s
                 GROUP BY YEAR(orders.order_date)
+                ORDER BY YEAR(orders.order_date) DESC;
                 """,
                 (start_yr, end_yr),
             )
@@ -119,16 +121,22 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
             db.cursor.execute(
                 """
-                SELECT YEAR(orders.order_date) AS order_year,
-                SUM(order_parts.qty * parts.price) * (1 + (%s / 100))
-                FROM orders JOIN order_parts ON orders.order_id = order_parts.order_id
-                JOIN parts ON order_parts.part_id = parts._id
-                WHERE order_year >= (SELECT MAX(YEAR(order_date)) - %s + 1 FROM orders)
-                GROUP BY order_year ORDER BY order_year DESC
-                """,
-                (rate, years),
-            )  # FIXME: must predict next N years, not last N years
-            data = db.cursor.fetchall()
-        return render_template("budget.html", years=years, rate=rate, tdata=data)
+                SELECT YEAR(orders.order_date), SUM(order_parts.quantity * parts.price)
+                FROM order_parts, orders, parts
+                WHERE orders.order_id = order_parts.order_id
+                AND order_parts.part_id = parts._id
+                GROUP BY YEAR(orders.order_date)
+                ORDER BY YEAR(orders.order_date) DESC
+                LIMIT 1;
+                """
+            )
+            data = db.cursor.fetchone()
+            last_yr = int(data[0])
+            total_expenses = float(data[1])
+            tdata = [
+                [year, total_expenses * (1 + rate / 100) ** years]
+                for year in range(last_yr + 1, last_yr + years + 1)
+            ]
+        return render_template("budget.html", years=years, rate=rate, tdata=tdata)
 
     return app
