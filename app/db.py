@@ -45,6 +45,7 @@ class Database:
         self.__conn = MySQLdb.connect(
             host=self.__host, user=self.__user, passwd=self.__pass, db=self.__db
         )
+        logging.info("Database connection established")
         self.__cur = self.__conn.cursor()
         return self
 
@@ -61,6 +62,7 @@ class Database:
         """
         try:
             if exc_type is None:
+                logging.info("Committing changes to database")
                 self.__conn.commit()
             else:
                 logging.error(f"Error: {exc_value}")
@@ -70,6 +72,7 @@ class Database:
             logging.error(f"Error while exiting context manager: {e}")
             return False
         finally:
+            logging.info("Closing database connection")
             self.__cur.close()
             self.__conn.close()
 
