@@ -65,7 +65,7 @@ class Database:
                 self.__conn.rollback()
                 return False
         except MySQLdb.Error as e:
-            print(f"Error: {e}")
+            print(f"Error while exiting context manager: {e}")
             return False
         finally:
             self.__cur.close()
