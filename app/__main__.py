@@ -59,8 +59,8 @@ def get_args() -> argparse.Namespace:
         "--password",
         dest="PASSWORD",
         type=str,
-        help="database to use for webapp",
         default=None,
+        help="database to use for webapp",
     )
     return parser.parse_args()
 
