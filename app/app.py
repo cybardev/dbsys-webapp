@@ -46,14 +46,18 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         Returns:
             str: html template for table view
         """
-        name = sanitize_input(request.form.get("tname"))
-        with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
-            db.cursor.execute(
-                f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{name}'",
-            )
-            headers = (h[0] for h in db.cursor.fetchall())
-            db.cursor.execute(f"SELECT * FROM {name}")
-            data = db.cursor.fetchall()
+        name = request.form.get("tname")
+        try:
+            with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
+                db.cursor.execute(
+                    "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = %s",
+                    (name,),
+                )
+                headers = (h[0] for h in db.cursor.fetchall())
+                db.cursor.execute(f"SELECT * FROM {sanitize_input(name)}")
+                data = db.cursor.fetchall()
+        except (MySQLdb.Error, MySQLdb.Warning) as e:
+            return redirect(f"/error/{urlparse.quote_plus(str(e))}")
         return render_template("table.html", tname=name, theaders=headers, tdata=data)
 
     @app.route("/supplier", methods=["POST"])
@@ -88,20 +92,23 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         """
         start_yr = int(request.form.get("startyear"))
         end_yr = int(request.form.get("endyear"))
-        with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
-            db.cursor.execute(
-                """
-                SELECT YEAR(orders.order_date), SUM(order_parts.quantity * parts.price)
-                FROM order_parts, orders, parts
-                WHERE orders.order_id = order_parts.order_id
-                AND order_parts.part_id = parts._id
-                AND YEAR(orders.order_date) BETWEEN %s AND %s
-                GROUP BY YEAR(orders.order_date)
-                ORDER BY YEAR(orders.order_date) DESC;
-                """,
-                (start_yr, end_yr),
-            )
-            data = db.cursor.fetchall()
+        try:
+            with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
+                db.cursor.execute(
+                    """
+                    SELECT YEAR(orders.order_date), SUM(order_parts.quantity * parts.price)
+                    FROM order_parts, orders, parts
+                    WHERE orders.order_id = order_parts.order_id
+                    AND order_parts.part_id = parts._id
+                    AND YEAR(orders.order_date) BETWEEN %s AND %s
+                    GROUP BY YEAR(orders.order_date)
+                    ORDER BY YEAR(orders.order_date) DESC;
+                    """,
+                    (start_yr, end_yr),
+                )
+                data = db.cursor.fetchall()
+        except (MySQLdb.Error, MySQLdb.Warning) as e:
+            return redirect(f"/error/{urlparse.quote_plus(str(e))}")
         return render_template(
             "expenses.html",
             start_yr=start_yr,
@@ -119,25 +126,28 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         """
         years = int(request.form.get("years"))
         rate = float(request.form.get("rate"))
-        with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
-            db.cursor.execute(
-                """
-                SELECT YEAR(orders.order_date), SUM(order_parts.quantity * parts.price)
-                FROM order_parts, orders, parts
-                WHERE orders.order_id = order_parts.order_id
-                AND order_parts.part_id = parts._id
-                GROUP BY YEAR(orders.order_date)
-                ORDER BY YEAR(orders.order_date) DESC
-                LIMIT 1;
-                """
-            )
-            data = db.cursor.fetchone()
-            last_yr = int(data[0])
-            total_expenses = float(data[1])
-            tdata = [
-                [last_yr + i, round(total_expenses * (1 + rate / 100) ** i, 2)]
-                for i in range(1, years + 1)
-            ]
+        try:
+            with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
+                db.cursor.execute(
+                    """
+                    SELECT YEAR(orders.order_date), SUM(order_parts.quantity * parts.price)
+                    FROM order_parts, orders, parts
+                    WHERE orders.order_id = order_parts.order_id
+                    AND order_parts.part_id = parts._id
+                    GROUP BY YEAR(orders.order_date)
+                    ORDER BY YEAR(orders.order_date) DESC
+                    LIMIT 1;
+                    """
+                )
+                data = db.cursor.fetchone()
+                last_yr = int(data[0])
+                total_expenses = float(data[1])
+                tdata = [
+                    [last_yr + i, round(total_expenses * (1 + rate / 100) ** i, 2)]
+                    for i in range(1, years + 1)
+                ]
+        except (MySQLdb.Error, MySQLdb.Warning) as e:
+            return redirect(f"/error/{urlparse.quote_plus(str(e))}")
         return render_template("budget.html", years=years, rate=rate, tdata=tdata)
 
     return app
