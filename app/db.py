@@ -27,12 +27,12 @@ class Database:
         self.__cur = None
 
     @property
-    def connection(self) -> MySQLdb.connections.Connection:
+    def connection(self):
         """Database connection property"""
         return self.__conn
 
     @property
-    def cursor(self) -> MySQLdb.cursors.Cursor:
+    def cursor(self):
         """Database cursor property"""
         return self.__cur
 

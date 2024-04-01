@@ -30,13 +30,13 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         return render_template("index.html")
 
     @app.route("/error/<string:msg>")
-    def error_page(err_msg: str) -> str:
+    def error_page(msg: str) -> str:
         """Render error page with info
 
         Returns:
             str: html template for error page
         """
-        return render_template("error.html", msg=err_msg)
+        return render_template("error.html", msg=msg)
 
     @app.route("/table", methods=["POST"])
     def show_table() -> str:
@@ -48,11 +48,11 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         name = request.form.get("tname")
         with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
             db.cursor.execute(
-                "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'%s';",
-                (name),
+                "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = `%s`",
+                (name,),
             )
             headers = db.cursor.fetchall()
-            db.cursor.execute("SELECT * FROM %s;", (name))
+            db.cursor.execute("SELECT * FROM `%s`", (name,))
             data = db.cursor.fetchall()
         return render_template("table.html", tname=name, theaders=headers, tdata=data)
 
@@ -67,15 +67,15 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
             with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
                 details = request.form
                 db.cursor.execute(
-                    "INSERT INTO suppliers(supplier_id, name, email) VALUES (%s, %s, %s);",
+                    "INSERT INTO suppliers(supplier_id, name, email) VALUES ('%s', '%s', '%s')",
                     (details["sid"], details["sname"], details["semail"]),
                 )
                 db.cursor.execute(
-                    "INSERT INTO suppliers_telephone(supplier_id, numbers) VALUES (%s, %s);",
+                    "INSERT INTO suppliers_telephone(supplier_id, numbers) VALUES ('%s', '%s')",
                     (details["sid"], details["stel"]),
                 )
         except (MySQLdb.Error, MySQLdb.Warning) as e:
-            return redirect(f"/error/{urlparse(str(e))}")
+            return redirect(f"/error/{urlparse.quote_plus(str(e))}")
         return redirect("/")
 
     @app.route("/expenses", methods=["POST"])
@@ -116,8 +116,8 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         Returns:
             str: html template for budget view
         """
-        years = request.form.get("years")
-        rate = request.form.get("rate")
+        years = int(request.form.get("years"))
+        rate = float(request.form.get("rate"))
         with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
             db.cursor.execute(
                 """
