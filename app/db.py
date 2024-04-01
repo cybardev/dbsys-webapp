@@ -1,6 +1,8 @@
 import logging
 
 import MySQLdb
+from MySQLdb.connections import Connection
+from MySQLdb.cursors import Cursor
 
 
 class Database:
@@ -27,12 +29,12 @@ class Database:
         self.__cur = None
 
     @property
-    def connection(self):
+    def connection(self) -> Connection:
         """Database connection property"""
         return self.__conn
 
     @property
-    def cursor(self):
+    def cursor(self) -> Cursor:
         """Database cursor property"""
         return self.__cur
 
