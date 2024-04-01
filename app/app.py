@@ -48,7 +48,7 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         name = request.form.get("tname")
         with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
             db.cursor.execute(
-                "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'%s'",
+                "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'%s'",
                 (name),
             )
             headers = db.cursor.fetchall()
