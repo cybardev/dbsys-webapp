@@ -11,24 +11,26 @@
             <h1>Table: {{ tname }}</h1>
         </header>
         <main>
-            <table>
-                <thead>
-                    <tr>
-                        {% for header in theaders %}
-                        <td>{{ header }}</td>
+            <section>
+                <table>
+                    <thead>
+                        <tr>
+                            {% for header in theaders %}
+                            <td>{{ header }}</td>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in tdata %}
+                        <tr>
+                            {% for col in row %}
+                            <td>{{ col }}</td>
+                            {% endfor %}
+                        </tr>
                         {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in tdata %}
-                    <tr>
-                        {% for col in row %}
-                        <td>{{ col }}</td>
-                        {% endfor %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </section>
         </main>
         <footer><a href="/">Home</a></footer>
     </body>
