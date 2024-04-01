@@ -1,5 +1,4 @@
 # data files
-suppliers_*.json
 *.csv
 
 # backup
