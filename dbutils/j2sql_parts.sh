@@ -13,4 +13,5 @@ mongoexport -d "$db" -c parts -u "$user" -p "$pass" --type=csv --fields "_id,pri
 echo "source parts_table.sql;" | mysql -u "$user" --password="$pass" "$db"
 cat parts.csv | tr "," "\t" >parts.tsv
 echo "load data local infile 'parts.tsv' into table parts" | mysql $db -u $user --password="$pass"
+rm parts.csv parts.tsv
 echo
