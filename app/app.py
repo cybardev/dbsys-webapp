@@ -4,6 +4,7 @@ import MySQLdb
 from flask import Flask, Response, redirect, render_template, request
 
 from .db import Database
+from .utils import sanitize_input
 
 
 def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> Flask:
@@ -45,14 +46,13 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         Returns:
             str: html template for table view
         """
-        name = request.form.get("tname")
+        name = sanitize_input(request.form.get("tname"))
         with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
             db.cursor.execute(
-                "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = `%s`",
-                (name,),
+                f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{name}'",
             )
-            headers = db.cursor.fetchall()
-            db.cursor.execute("SELECT * FROM `%s`", (name,))
+            headers = (h[0] for h in db.cursor.fetchall())
+            db.cursor.execute(f"SELECT * FROM {name}")
             data = db.cursor.fetchall()
         return render_template("table.html", tname=name, theaders=headers, tdata=data)
 
@@ -65,15 +65,16 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         """
         try:
             with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
-                details = request.form
+                details = {k: sanitize_input(v) for k, v in request.form.items()}
                 db.cursor.execute(
-                    "INSERT INTO suppliers(supplier_id, name, email) VALUES ('%s', '%s', '%s')",
+                    "INSERT INTO suppliers(supplier_id, name, email) VALUES (%s, %s, %s)",
                     (details["sid"], details["sname"], details["semail"]),
                 )
-                db.cursor.execute(
-                    "INSERT INTO suppliers_telephone(supplier_id, numbers) VALUES ('%s', '%s')",
-                    (details["sid"], details["stel"]),
-                )
+                for num in details["stel"].split(","):
+                    db.cursor.execute(
+                        "INSERT INTO suppliers_telephone(supplier_id, number) VALUES (%s, %s)",
+                        (details["sid"], num.strip()),
+                    )
         except (MySQLdb.Error, MySQLdb.Warning) as e:
             return redirect(f"/error/{urlparse.quote_plus(str(e))}")
         return redirect("/")
@@ -85,8 +86,8 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         Returns:
             str: html template for expenses view
         """
-        start_yr = request.form.get("startyear")
-        end_yr = request.form.get("endyear")
+        start_yr = int(request.form.get("startyear"))
+        end_yr = int(request.form.get("endyear"))
         with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
             db.cursor.execute(
                 """
@@ -134,8 +135,8 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
             last_yr = int(data[0])
             total_expenses = float(data[1])
             tdata = [
-                [year, total_expenses * (1 + rate / 100) ** years]
-                for year in range(last_yr + 1, last_yr + years + 1)
+                [last_yr + i, round(total_expenses * (1 + rate / 100) ** i, 2)]
+                for i in range(1, years + 1)
             ]
         return render_template("budget.html", years=years, rate=rate, tdata=tdata)
 
