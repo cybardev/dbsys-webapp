@@ -25,11 +25,11 @@ python3 -m app -d $DB_NAME -u $DB_USER
 
 - Professor Nikita Neveditsin
 
-    - [j2sql_parts.sh](db/j2sql_parts.sh)
-    - [parts_table.sql](db/parts_table.sql)
-    - example Flask app
-    - example Jinja templates
+  - [j2sql_parts.sh](db/j2sql_parts.sh)
+  - [parts_table.sql](db/parts_table.sql)
+  - example Flask app
+  - example Jinja templates
     
 - MVP.CSS
 
-    - [andybrewer/mvp](https://github.com/andybrewer/mvp)
+  - [andybrewer/mvp](https://github.com/andybrewer/mvp)
