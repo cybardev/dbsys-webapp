@@ -48,11 +48,11 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         name = request.form.get("tname")
         with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
             db.cursor.execute(
-                "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'%s'",
+                "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'%s';",
                 (name),
             )
             headers = db.cursor.fetchall()
-            db.cursor.execute("SELECT * FROM %s", (name))
+            db.cursor.execute("SELECT * FROM %s;", (name))
             data = db.cursor.fetchall()
         return render_template("table.html", tname=name, theaders=headers, tdata=data)
 
@@ -67,11 +67,11 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
             with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
                 details = request.form
                 db.cursor.execute(
-                    "INSERT INTO suppliers(supplier_id, name, email) VALUES (%s, %s, %s)",
+                    "INSERT INTO suppliers(supplier_id, name, email) VALUES (%s, %s, %s);",
                     (details["sid"], details["sname"], details["semail"]),
                 )
                 db.cursor.execute(
-                    "INSERT INTO suppliers_telephone(supplier_id, numbers) VALUES (%s, %s)",
+                    "INSERT INTO suppliers_telephone(supplier_id, numbers) VALUES (%s, %s);",
                     (details["sid"], details["stel"]),
                 )
         except (MySQLdb.Error, MySQLdb.Warning) as e:
