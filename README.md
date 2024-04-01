@@ -21,6 +21,10 @@ or, to enter password privately:
 python3 -m app -d $DB_NAME -u $DB_USER
 ```
 
+### Report
+
+Read the report here: [REPORT.pdf](REPORT.pdf)
+
 ### Credits
 
 - Professor Nikita Neveditsin
@@ -29,7 +33,7 @@ python3 -m app -d $DB_NAME -u $DB_USER
   - [parts_table.sql](db/parts_table.sql)
   - example Flask app
   - example Jinja templates
-    
+
 - MVP.CSS
 
   - [andybrewer/mvp](https://github.com/andybrewer/mvp)
