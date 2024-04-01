@@ -37,7 +37,7 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         Returns:
             str: html template for error page
         """
-        return render_template("error.html", msg=msg)
+        return render_template("error.html", msg=urlparse.unquote_plus(msg))
 
     @app.route("/table", methods=["POST"])
     def show_table() -> str:
