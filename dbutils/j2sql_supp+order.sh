@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# import environment secrets
+# import environment secrets (user, pass, db)
 source .env
 
 # create tables in database
