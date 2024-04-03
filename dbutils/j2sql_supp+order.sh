@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
-user="uXY"
-pass="XYZ"
-db="uXY"
+# import environment secrets
+source .env
 
 # create tables in database
 echo "source make_tables.sql;" | mysql -u "$user" --password="$pass" "$db"

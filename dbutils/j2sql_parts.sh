@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 
-#  Write below your own credentials
-user="uXY"
-pass="XYZ"
-db="uXY"
+# import environment secrets
+source .env
 
 echo
 
