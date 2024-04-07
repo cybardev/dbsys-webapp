@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # import environment secrets (user, pass, db)
-source .env
+source ../.env
 
 echo
 
