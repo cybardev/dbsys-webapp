@@ -50,7 +50,12 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         try:
             with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
                 db.cursor.execute(
-                    "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = %s",
+                    """
+                    SELECT COLUMN_NAME
+                    FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME = %s
+                    ORDER BY ordinal_position
+                    """,
                     (name,),
                 )
                 headers = (h[0] for h in db.cursor.fetchall())
