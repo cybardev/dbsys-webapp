@@ -50,13 +50,20 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         try:
             with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
                 if name == "suppliers_full":
-                    headers = ("supplier_id", "name", "email", "number")
+                    headers = ("supplier_id", "name", "email", "numbers")
                     db.cursor.execute(
                         """
-                        SELECT s.supplier_id, s.name, s.email, st.number
-                        FROM suppliers s
-                        JOIN suppliers_telephone st
-                        ON s.supplier_id = st.supplier_id;
+                        SELECT
+                            s.supplier_id,
+                            s.name,
+                            s.email,
+                            JSON_ARRAYAGG(REPLACE(st.number, '\r', '')) AS numbers
+                        FROM
+                            suppliers s
+                        JOIN
+                            suppliers_telephone st ON s.supplier_id = st.supplier_id
+                        GROUP BY
+                            s.supplier_id, s.name, s.email;
                         """
                     )
                 elif name == "orders_full":
@@ -69,10 +76,18 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
                     )
                     db.cursor.execute(
                         """
-                        SELECT o.order_id, o.order_date, o.supplier_id, op.part_id, op.quantity
-                        FROM orders o
-                        JOIN order_parts op
-                        ON o.order_id = op.order_id;
+                        SELECT
+                            o.order_id,
+                            o.order_date,
+                            o.supplier_id,
+                            JSON_ARRAYAGG(op.part_id) AS part_ids,
+                            JSON_ARRAYAGG(op.quantity) AS quantities
+                        FROM
+                            orders o
+                        JOIN
+                            order_parts op ON o.order_id = op.order_id
+                        GROUP BY
+                            o.order_id, o.order_date, o.supplier_id;
                         """
                     )
                 else:
