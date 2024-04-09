@@ -3,6 +3,7 @@
 
 # backup
 *.bak
+*.old.*
 
 # cache
 __pycache__/
