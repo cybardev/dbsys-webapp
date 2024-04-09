@@ -7,8 +7,8 @@ CREATE TABLE IF NOT EXISTS suppliers (
 
 -- Telephone Numbers Table for Suppliers
 CREATE TABLE IF NOT EXISTS suppliers_telephone (
+    number VARCHAR(20) PRIMARY KEY,
     supplier_id INT,
-    number VARCHAR(20),
     FOREIGN KEY (supplier_id) REFERENCES suppliers(supplier_id)
 );
 
