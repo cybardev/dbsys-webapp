@@ -49,17 +49,45 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         name = request.form.get("tname")
         try:
             with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
-                db.cursor.execute(
-                    """
-                    SELECT COLUMN_NAME
-                    FROM INFORMATION_SCHEMA.COLUMNS
-                    WHERE TABLE_NAME = %s
-                    ORDER BY ordinal_position
-                    """,
-                    (name,),
-                )
-                headers = (h[0] for h in db.cursor.fetchall())
-                db.cursor.execute(f"SELECT * FROM {sanitize_input(name)}")
+                if name == "suppliers_full":
+                    headers = ("supplier_id", "name", "email", "number")
+                    db.cursor.execute(
+                        """
+                        SELECT s.supplier_id, s.name, s.email, st.number
+                        FROM suppliers s
+                        JOIN suppliers_telephone st
+                        ON s.supplier_id = st.supplier_id;
+                        """
+                    )
+                elif name == "orders_full":
+                    headers = (
+                        "order_id",
+                        "order_date",
+                        "supplier_id",
+                        "part_id",
+                        "quantity",
+                    )
+                    db.cursor.execute(
+                        """
+                        SELECT o.order_id, o.order_date, o.supplier_id, op.part_id, op.quantity
+                        FROM orders o
+                        JOIN order_parts op
+                        ON o.order_id = op.order_id;
+                        """
+                    )
+                else:
+                    db.cursor.execute(
+                        """
+                        SELECT COLUMN_NAME
+                        FROM INFORMATION_SCHEMA.COLUMNS
+                        WHERE TABLE_NAME = %s
+                        ORDER BY ordinal_position
+                        """,
+                        (name,),
+                    )
+                    headers = (h[0] for h in db.cursor.fetchall())
+                    db.cursor.execute(f"SELECT * FROM {sanitize_input(name)}")
+
                 data = db.cursor.fetchall()
         except (MySQLdb.Error, MySQLdb.Warning) as e:
             return redirect(f"/error/{urlparse.quote_plus(str(e))}")
