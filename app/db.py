@@ -1,8 +1,8 @@
 import logging
 
-import MySQLdb
-from MySQLdb.connections import Connection
-from MySQLdb.cursors import Cursor
+import psycopg
+from psycopg.connection import Connection
+from psycopg.cursor import Cursor
 
 
 class Database:
@@ -44,7 +44,7 @@ class Database:
         Returns:
             Database: modified context manager instance
         """
-        self.__conn = MySQLdb.connect(
+        self.__conn = psycopg.connect(
             host=self.__host, user=self.__user, passwd=self.__pass, db=self.__db
         )
         logging.info("Database connection established")
@@ -70,7 +70,7 @@ class Database:
                 logging.error(f"Error: {exc_value}")
                 self.__conn.rollback()
                 return False
-        except MySQLdb.Error as e:
+        except psycopg.Error as e:
             logging.error(f"Error while exiting context manager: {e}")
             return False
         finally:

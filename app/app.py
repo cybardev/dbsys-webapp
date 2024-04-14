@@ -1,6 +1,6 @@
 import urllib.parse as urlparse
 
-import MySQLdb
+import psycopg
 from flask import Flask, Response, redirect, render_template, request
 
 from .db import Database
@@ -104,7 +104,7 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
                     db.cursor.execute(f"SELECT * FROM {sanitize_input(name)}")
 
                 data = db.cursor.fetchall()
-        except (MySQLdb.Error, MySQLdb.Warning) as e:
+        except (psycopg.Error, psycopg.Warning) as e:
             return redirect(f"/error/{urlparse.quote_plus(str(e))}")
         return render_template("table.html", tname=name, theaders=headers, tdata=data)
 
@@ -127,7 +127,7 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
                         "INSERT INTO suppliers_telephone(supplier_id, number) VALUES (%s, %s)",
                         (details["sid"], num.strip()),
                     )
-        except (MySQLdb.Error, MySQLdb.Warning) as e:
+        except (psycopg.Error, psycopg.Warning) as e:
             return redirect(f"/error/{urlparse.quote_plus(str(e))}")
         return redirect("/")
 
@@ -155,7 +155,7 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
                     (start_yr, end_yr),
                 )
                 data = db.cursor.fetchall()
-        except (MySQLdb.Error, MySQLdb.Warning) as e:
+        except (psycopg.Error, psycopg.Warning) as e:
             return redirect(f"/error/{urlparse.quote_plus(str(e))}")
         return render_template(
             "expenses.html",
@@ -194,7 +194,7 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
                     [last_yr + i, round(total_expenses * (1 + rate / 100) ** i, 2)]
                     for i in range(1, years + 1)
                 ]
-        except (MySQLdb.Error, MySQLdb.Warning) as e:
+        except (psycopg.Error, psycopg.Warning) as e:
             return redirect(f"/error/{urlparse.quote_plus(str(e))}")
         return render_template("budget.html", years=years, rate=rate, tdata=tdata)
 
