@@ -6,9 +6,9 @@ databases:
       region: ohio
 
 services:
-    - type: web
+    - name: dbsys-app
       plan: free
-      name: dbsys-app
+      type: web
       runtime: python
       repo: https://github.com/cybardev/dbsys-webapp.git
       buildCommand: "pip install -r requirements.txt"
