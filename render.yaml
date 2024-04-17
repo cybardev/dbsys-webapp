@@ -1,28 +1,17 @@
-# Flask app Render Blueprint
-
 databases:
     - name: dbsys-app-db
       plan: free
       region: ohio
-
 services:
     - name: dbsys-app
       plan: free
       type: web
       runtime: python
       repo: https://github.com/cybardev/dbsys-webapp.git
-      buildCommand: "pip install -r requirements.txt"
-      startCommand: "python -m gunicorn app:render"
+      buildCommand: pip install -r requirements.txt
+      startCommand: python -m gunicorn app:render
       envVars:
-          - key: DB_USER
+          - key: DB_URL
             fromDatabase:
                 name: dbsys-app-db
-                property: user
-          - key: DB_PASS
-            fromDatabase:
-                name: dbsys-app-db
-                property: password
-          - key: DB_NAME
-            fromDatabase:
-                name: dbsys-app-db
-                property: database
+                property: connectionString
