@@ -9,8 +9,7 @@ import psycopg
 from .app import app_factory
 
 
-def deploy():
-    DB_URL = os.environ["DB_URL"]
+def deploy(DB_URL: str = os.environ["DB_URL"]):
 
     # create DB tables if they don't exist
     with psycopg.connect(DB_URL) as db:
