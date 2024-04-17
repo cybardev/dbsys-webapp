@@ -1,13 +1,7 @@
-# module declaration script
+# module init script
 
 import os
 
 from app.app import app_factory
 
-
-render = app_factory(
-    "localhost",
-    os.environ["DB_USER"],
-    os.environ["DB_PASS"],
-    os.environ["DB_NAME"],
-)
+render = app_factory(os.environ["DB_URL"])

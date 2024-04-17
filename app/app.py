@@ -3,18 +3,14 @@ import urllib.parse as urlparse
 import psycopg
 from flask import Flask, Response, redirect, render_template, request
 
-from .db import Database
 from .utils import sanitize_input
 
 
-def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> Flask:
+def app_factory(DB_URL: str) -> Flask:
     """Factory function to create a Flask web app
 
     Args:
-        DB_HOST (str): hostname for database server
-        DB_USER (str): username for database server
-        DB_PASSWORD (str): password for database server
-        DB_NAME (str): name of database to connect to
+        DB_URL (str): database url
 
     Returns:
         Flask: web app object to run
@@ -48,62 +44,63 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         """
         name = request.form.get("tname")
         try:
-            with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
-                if name == "suppliers_full":
-                    headers = ("supplier_id", "name", "email", "numbers")
-                    db.cursor.execute(
-                        """
-                        SELECT
-                            s.supplier_id,
-                            s.name,
-                            s.email,
-                            JSON_ARRAYAGG(REPLACE(st.number, '\r', '')) AS numbers
-                        FROM
-                            suppliers s
-                        JOIN
-                            suppliers_telephone st ON s.supplier_id = st.supplier_id
-                        GROUP BY
-                            s.supplier_id, s.name, s.email;
-                        """
-                    )
-                elif name == "orders_full":
-                    headers = (
-                        "order_id",
-                        "order_date",
-                        "supplier_id",
-                        "part_id",
-                        "quantity",
-                    )
-                    db.cursor.execute(
-                        """
-                        SELECT
-                            o.order_id,
-                            o.order_date,
-                            o.supplier_id,
-                            JSON_ARRAYAGG(op.part_id) AS part_ids,
-                            JSON_ARRAYAGG(op.quantity) AS quantities
-                        FROM
-                            orders o
-                        JOIN
-                            order_parts op ON o.order_id = op.order_id
-                        GROUP BY
-                            o.order_id, o.order_date, o.supplier_id;
-                        """
-                    )
-                else:
-                    db.cursor.execute(
-                        """
-                        SELECT COLUMN_NAME
-                        FROM INFORMATION_SCHEMA.COLUMNS
-                        WHERE TABLE_NAME = %s
-                        ORDER BY ordinal_position
-                        """,
-                        (name,),
-                    )
-                    headers = (h[0] for h in db.cursor.fetchall())
-                    db.cursor.execute(f"SELECT * FROM {sanitize_input(name)}")
+            with psycopg.connection(DB_URL) as db:
+                with db.cursor() as cursor:
+                    if name == "suppliers_full":
+                        headers = ("supplier_id", "name", "email", "numbers")
+                        cursor.execute(
+                            """
+                            SELECT
+                                s.supplier_id,
+                                s.name,
+                                s.email,
+                                JSON_ARRAYAGG(REPLACE(st.number, '\r', '')) AS numbers
+                            FROM
+                                suppliers s
+                            JOIN
+                                suppliers_telephone st ON s.supplier_id = st.supplier_id
+                            GROUP BY
+                                s.supplier_id, s.name, s.email;
+                            """
+                        )
+                    elif name == "orders_full":
+                        headers = (
+                            "order_id",
+                            "order_date",
+                            "supplier_id",
+                            "part_id",
+                            "quantity",
+                        )
+                        cursor.execute(
+                            """
+                            SELECT
+                                o.order_id,
+                                o.order_date,
+                                o.supplier_id,
+                                JSON_ARRAYAGG(op.part_id) AS part_ids,
+                                JSON_ARRAYAGG(op.quantity) AS quantities
+                            FROM
+                                orders o
+                            JOIN
+                                order_parts op ON o.order_id = op.order_id
+                            GROUP BY
+                                o.order_id, o.order_date, o.supplier_id;
+                            """
+                        )
+                    else:
+                        cursor.execute(
+                            """
+                            SELECT COLUMN_NAME
+                            FROM INFORMATION_SCHEMA.COLUMNS
+                            WHERE TABLE_NAME = %s
+                            ORDER BY ordinal_position
+                            """,
+                            (name,),
+                        )
+                        headers = (h[0] for h in db.cursor.fetchall())
+                        cursor.execute(f"SELECT * FROM {sanitize_input(name)}")
 
-                data = db.cursor.fetchall()
+                    data = cursor.fetchall()
         except (psycopg.Error, psycopg.Warning) as e:
             return redirect(f"/error/{urlparse.quote_plus(str(e))}")
         return render_template("table.html", tname=name, theaders=headers, tdata=data)
@@ -116,17 +113,18 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
             Response: response from endpoint to redirect to
         """
         try:
-            with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
-                details = {k: sanitize_input(v) for k, v in request.form.items()}
-                db.cursor.execute(
-                    "INSERT INTO suppliers(supplier_id, name, email) VALUES (%s, %s, %s)",
-                    (details["sid"], details["sname"], details["semail"]),
-                )
-                for num in details["stel"].split(","):
-                    db.cursor.execute(
-                        "INSERT INTO suppliers_telephone(supplier_id, number) VALUES (%s, %s)",
-                        (details["sid"], num.strip()),
+            with psycopg.connection(DB_URL) as db:
+                with db.cursor() as cursor:
+                    details = {k: sanitize_input(v) for k, v in request.form.items()}
+                    cursor.execute(
+                        "INSERT INTO suppliers(supplier_id, name, email) VALUES (%s, %s, %s)",
+                        (details["sid"], details["sname"], details["semail"]),
                     )
+                    for num in details["stel"].split(","):
+                        cursor.execute(
+                            "INSERT INTO suppliers_telephone(supplier_id, number) VALUES (%s, %s)",
+                            (details["sid"], num.strip()),
+                        )
         except (psycopg.Error, psycopg.Warning) as e:
             return redirect(f"/error/{urlparse.quote_plus(str(e))}")
         return redirect("/")
@@ -141,20 +139,21 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         start_yr = int(request.form.get("startyear"))
         end_yr = int(request.form.get("endyear"))
         try:
-            with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
-                db.cursor.execute(
-                    """
-                    SELECT YEAR(orders.order_date), SUM(order_parts.quantity * parts.price)
-                    FROM order_parts, orders, parts
-                    WHERE orders.order_id = order_parts.order_id
-                    AND order_parts.part_id = parts._id
-                    AND YEAR(orders.order_date) BETWEEN %s AND %s
-                    GROUP BY YEAR(orders.order_date)
-                    ORDER BY YEAR(orders.order_date) DESC;
-                    """,
-                    (start_yr, end_yr),
-                )
-                data = db.cursor.fetchall()
+            with psycopg.connection(DB_URL) as db:
+                with db.cursor() as cursor:
+                    cursor.execute(
+                        """
+                        SELECT YEAR(orders.order_date), SUM(order_parts.quantity * parts.price)
+                        FROM order_parts, orders, parts
+                        WHERE orders.order_id = order_parts.order_id
+                        AND order_parts.part_id = parts._id
+                        AND YEAR(orders.order_date) BETWEEN %s AND %s
+                        GROUP BY YEAR(orders.order_date)
+                        ORDER BY YEAR(orders.order_date) DESC;
+                        """,
+                        (start_yr, end_yr),
+                    )
+                    data = cursor.fetchall()
         except (psycopg.Error, psycopg.Warning) as e:
             return redirect(f"/error/{urlparse.quote_plus(str(e))}")
         return render_template(
@@ -175,25 +174,26 @@ def app_factory(DB_HOST: str, DB_USER: str, DB_PASSWORD: str, DB_NAME: str) -> F
         years = int(request.form.get("years"))
         rate = float(request.form.get("rate"))
         try:
-            with Database(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME) as db:
-                db.cursor.execute(
-                    """
-                    SELECT YEAR(orders.order_date), SUM(order_parts.quantity * parts.price)
-                    FROM order_parts, orders, parts
-                    WHERE orders.order_id = order_parts.order_id
-                    AND order_parts.part_id = parts._id
-                    GROUP BY YEAR(orders.order_date)
-                    ORDER BY YEAR(orders.order_date) DESC
-                    LIMIT 1;
-                    """
-                )
-                data = db.cursor.fetchone()
-                last_yr = int(data[0])
-                total_expenses = float(data[1])
-                tdata = [
-                    [last_yr + i, round(total_expenses * (1 + rate / 100) ** i, 2)]
-                    for i in range(1, years + 1)
-                ]
+            with psycopg.connection(DB_URL) as db:
+                with db.cursor() as cursor:
+                    cursor.execute(
+                        """
+                        SELECT YEAR(orders.order_date), SUM(order_parts.quantity * parts.price)
+                        FROM order_parts, orders, parts
+                        WHERE orders.order_id = order_parts.order_id
+                        AND order_parts.part_id = parts._id
+                        GROUP BY YEAR(orders.order_date)
+                        ORDER BY YEAR(orders.order_date) DESC
+                        LIMIT 1;
+                        """
+                    )
+                    data = cursor.fetchone()
+                    last_yr = int(data[0])
+                    total_expenses = float(data[1])
+                    tdata = [
+                        [last_yr + i, round(total_expenses * (1 + rate / 100) ** i, 2)]
+                        for i in range(1, years + 1)
+                    ]
         except (psycopg.Error, psycopg.Warning) as e:
             return redirect(f"/error/{urlparse.quote_plus(str(e))}")
         return render_template("budget.html", years=years, rate=rate, tdata=tdata)
