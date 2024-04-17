@@ -11,8 +11,5 @@
 # cache
 __pycache__/
 
-# final submission directory
-scripts/
-
 # environment secrets
 *.env
