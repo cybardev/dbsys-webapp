@@ -3,8 +3,6 @@ import urllib.parse as urlparse
 import psycopg
 from flask import Flask, Response, redirect, render_template, request
 
-from .utils import sanitize_input
-
 
 def app_factory(DB_URL: str) -> Flask:
     """Factory function to create a Flask web app
@@ -98,7 +96,7 @@ def app_factory(DB_URL: str) -> Flask:
                             (name,),
                         )
                         headers = (h[0] for h in db.cursor.fetchall())
-                        cursor.execute(f"SELECT * FROM {sanitize_input(name)}")
+                        cursor.execute(f"SELECT * FROM {name.replace(';', '')}")
 
                     data = cursor.fetchall()
         except (psycopg.Error, psycopg.Warning) as e:
@@ -115,7 +113,7 @@ def app_factory(DB_URL: str) -> Flask:
         try:
             with psycopg.connection(DB_URL) as db:
                 with db.cursor() as cursor:
-                    details = {k: sanitize_input(v) for k, v in request.form.items()}
+                    details = {k: v.replace(";", "") for k, v in request.form.items()}
                     cursor.execute(
                         "INSERT INTO suppliers(supplier_id, name, email) VALUES (%s, %s, %s)",
                         (details["sid"], details["sname"], details["semail"]),

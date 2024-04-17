@@ -6,7 +6,7 @@ import os
 
 import psycopg
 
-from app.app import app_factory
+from .app import app_factory
 
 
 def deploy():
@@ -20,15 +20,3 @@ def deploy():
                     cursor.execute(file.read())
 
     return app_factory(DB_URL)
-
-
-def sanitize_input(s: str) -> str:
-    """Sanitize SQL query string
-
-    Args:
-        s (str): query string to sanitize
-
-    Returns:
-        str: sanitized query string
-    """
-    return s.replace(";", "")
