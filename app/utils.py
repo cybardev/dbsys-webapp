@@ -9,7 +9,7 @@ import psycopg
 from app.app import app_factory
 
 
-def render():
+def deploy():
     DB_URL = os.environ["DB_URL"]
 
     # create DB tables if they don't exist

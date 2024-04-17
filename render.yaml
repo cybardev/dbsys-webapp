@@ -9,7 +9,7 @@ services:
       runtime: python
       repo: https://github.com/cybardev/dbsys-webapp.git
       buildCommand: pip install -r requirements.txt
-      startCommand: python -m gunicorn app:render()
+      startCommand: python -m gunicorn app:deploy()
       envVars:
           - key: DB_URL
             fromDatabase:
